@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/websocket"
+	"golang.org/x/net/http2"
 )
 
 var addr = flag.String("addr", "localhost:8004", "http service address")
@@ -44,10 +45,34 @@ func echo(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func main() {
-	flag.Parse()
-	log.SetFlags(0)
-	http.HandleFunc("/echo", echo)
-	http.HandleFunc("/", home)
-	log.Fatal(http.ListenAndServe(*addr, nil))
+func index_main(w http.ResponseWriter, r *http.Request) {
+
+	w.Write([]byte("<h1><center> Hello from Go! </h1></center>"))
+
 }
+
+func main() {
+
+	var srv http.Server
+	srv.Addr = ":8002"
+	//Enable http2
+	http2.ConfigureServer(&srv, nil)
+
+	http.HandleFunc("/", index_main)
+
+	err := srv.ListenAndServeTLS("certs/localhost.cert", "certs/localhost.key")
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	//srv.ListenAndServe()
+	// flag.Parse()
+	// log.SetFlags(0)
+	// http.HandleFunc("/echo", echo)
+	// http.HandleFunc("/", home)
+	// log.Fatal(http.ListenAndServe(*addr, nil))
+}
+
+// openssl genrsa -out localhost.key 2048
+// openssl req -new -x509 -key localhost.key -out localhost.cert -days 3650 -subj /CN=localhost
